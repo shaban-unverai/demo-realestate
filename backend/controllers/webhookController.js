@@ -1,9 +1,7 @@
 const { getSession, updateSession, clearSession } = require('../services/sessionService');
 const { generateAIReply } = require('../services/aiService');
 const { matchProperties } = require('./propertyController');
-const Lead = require('../models/Lead');
 const { calculateLeadScore, assignAgent } = require('../services/leadService');
-const Property = require('../models/Property');
 const { sendMessage, receiveMessage } = require('../services/whatsappService');
 
 // WhatsApp conversation steps
@@ -47,14 +45,17 @@ exports.handleWebhook = async (req, res) => {
         await sendMessage(from, 'How many people in your family?');
         return res.sendStatus(200);
       }
-      // All info collected, match properties
-      const properties = await Property.find({});
+      // All info collected, match properties (Supabase)
+      const supabase = req.app.get('supabase');
+      const { data: properties, error: propError } = await supabase.from('properties').select('*');
+      if (propError) throw propError;
       const matches = matchProperties(data, properties);
-      // Save lead
+      // Save lead (Supabase)
       const { score, classification } = calculateLeadScore(data);
       const assigned_agent = assignAgent(data, classification);
-      const lead = new Lead({ ...data, lead_score: score, assigned_agent });
-      await lead.save();
+      const leadData = { ...data, lead_score: score, assigned_agent };
+      const { error: leadError } = await supabase.from('leads').insert([leadData]);
+      if (leadError) throw leadError;
       clearSession(from);
       let reply = '';
       if (classification === 'HOT') reply = 'Perfect 👌 I’ll connect you with a specialist right away';
@@ -63,7 +64,7 @@ exports.handleWebhook = async (req, res) => {
       // Send matches as WhatsApp messages
       if (matches.length > 0) {
         for (const prop of matches) {
-          await sendMessage(from, `${prop.title}\n${prop.bedrooms}BR | ${prop.area_sqft} sqft | ${prop.price_aed} AED\n${prop.features.join(', ')}\nAgent: ${prop.agent_name}`);
+          await sendMessage(from, `${prop.title}\n${prop.bedrooms}BR | ${prop.area_sqft} sqft | ${prop.price_aed} AED\n${(prop.features || []).join(', ')}\nAgent: ${prop.agent_name}`);
         }
       }
       await sendMessage(from, reply);

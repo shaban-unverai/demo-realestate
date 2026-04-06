@@ -1,20 +1,10 @@
-const mongoose = require('mongoose');
+// Supabase CRUD helpers for Property
+// Table: properties
+// Use supabase client in controllers/services
 
-const PropertySchema = new mongoose.Schema({
-  property_id: { type: String, required: true, unique: true },
-  title: String,
-  location: String,
-  property_type: String,
-  bedrooms: Number,
-  bathrooms: Number,
-  area_sqft: Number,
-  price_aed: Number,
-  status: String,
-  nearest_school: String,
-  nearest_hospital: String,
-  features: [String],
-  agent_name: String,
-  agent_contact: String
-});
+// Example property object structure:
+// {
+//   property_id, title, location, property_type, bedrooms, bathrooms, area_sqft, price_aed, status, nearest_school, nearest_hospital, features, agent_name, agent_contact
+// }
 
-module.exports = mongoose.model('Property', PropertySchema);
+// All DB logic is now in controller/service using Supabase client
