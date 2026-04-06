@@ -11,7 +11,7 @@ export default function LeadsTable() {
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
-    fetch('/api/leads')
+    fetch(`${import.meta.env.VITE_API_URL}/api/leads`)
       .then(res => res.json())
       .then(data => setLeads(data.leads || []));
   }, []);
@@ -53,7 +53,7 @@ export default function LeadsTable() {
 function LeadDetail({lead, onClose}) {
   const [matches, setMatches] = useState([]);
   useEffect(() => {
-    fetch('/api/match-properties', {
+    fetch(`${import.meta.env.VITE_API_URL}/api/match-properties`, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify(lead)
